@@ -1,4 +1,4 @@
-console.log('content-script.js')
+// console.log('content-script.js')
 
 
 /*
@@ -12,7 +12,7 @@ console.log('content-script.js')
 chrome.runtime.onMessage.addListener(function (message, sender, sendResponse) {
     // Handle message.
 
-    console.log(message);
+    // console.log(message);
 
     reProportion(Number(message));
 
@@ -39,6 +39,15 @@ chrome.runtime.onMessage.addListener(function (message, sender, sendResponse) {
 // what's left:
 // configure fraction stuff
 
+
+// code issues 4/29/2021
+//-----------------------
+// "adjust fractions" just deletes characters on its line until there is nothing left (why?)
+// this could be because of context messing up for the size of fraction
+
+// adjust fractions does not work when doubling 5 / 2 (what?)
+
+// cannot halve integer values (huh?)
 function reProportion(multiplier) {
     $.each($('.o-Ingredients__a-Ingredient--CheckboxLabel'), function () {
 
@@ -51,23 +60,73 @@ function reProportion(multiplier) {
         // update the newContext string each time we call applyRegexAndMultiply
 
         var newContext = applyRegexAndMultiply(context, wholeNumberRegex, multiplier);
-        // newContext = applyRegexAndMultiply(mixedFractionRegex);
-        // newContext = applyRegexAndMultiply(context,fractionRegex);
+        newContext = applyRegexAndMultiply(newContext, mixedFractionRegex, multiplier);
+        newContext = applyRegexAndMultiply(newContext,fractionRegex, multiplier);
+
         $(this).context.innerHTML = newContext;
+
+        // I (Aidan) ADDED PLUS SIGNS ON THE OUTSIDE OF THE CONTEXT TO TRY TO DEBUG (but this will be commented)
+        // $(this).context.innerHTML = "+" + newContext + "+";
     });
 }
+
+var gcd = function(a, b) {
+    if (!b) return a;
+
+    return gcd(b, a % b);
+};
+
+function simplify(fract, m) {
+    const nume = fract.split("/")[0] * m * 100;
+    const denom = fract.split("/")[1] * 100;
+
+    if (nume % denom === 0) { // when there is no fraction after multiplication
+        return (nume / denom).toString()
+    } else { // when there is a fraction
+        const myGCD = gcd(nume, denom);
+        return (nume / myGCD).toString() + "/" + (denom / myGCD).toString();
+    }
+}
+
+function decimal2fraction(dec) {
+    const nume = dec * 100;
+    const denom = 100;
+    const myGCD = gcd(nume, denom);
+    return (nume / myGCD).toString() + "/" + (denom / myGCD).toString();
+}
+
+// multiplier can be 0.25, 0.5, 2, 3, 4
+function changeValue(input, mult) {
+    let out = "";
+
+    const splitInput = input.split(" ");
+
+    if (splitInput.length === 1) { // HANDLE NORMAL CASE
+        out = simplify(splitInput[0], mult);
+    } else { // HANDLE MIX FRACTION CASE
+        const whole = parseInt(splitInput[0]);
+        const numerator = parseInt(splitInput[1].split('/')[0]);
+        const denomonator = parseInt(splitInput[1].split('/')[1]);
+        const unsimplified = (whole * denomonator + numerator).toString() + "/" + denomonator.toString();
+        out = simplify(unsimplified, mult);
+    }
+
+    return (out);
+}
+
 
 /*
     Applies regex function to the context (innerHTML) of some element on a FoodNetwork recipe.
     The goal is to multiply ingredients by some value.
  */
 
+
 function applyRegexAndMultiply(context, myRegex, multiplier) {
 
     // split up context into char array, so it's easier to change values of
     let charArray = context.split("");
     let ogLength = charArray.length;
-    console.log("\n\nFOR: ", context);
+    // console.log("\n\nFOR: ", context);
 
 
     // while there are matches in the context for our regex expression
@@ -75,21 +134,23 @@ function applyRegexAndMultiply(context, myRegex, multiplier) {
     while ((match = myRegex.exec(context)) !== null) {
         var value = match[0]; // e.g. "5"
 
-        // to-do: fraction functionality
-        // fraction converted to decimal (only works for normal fracs rn)
+        var newValue;
         if (value.includes("/")) {
-            value = value
-                .split('/')
-                .reduce((numerator, denominator, i) =>
-                    numerator / (i ? denominator : 1)
-                );
-        } else {
+            console.log("FRACTION FOUND: " + value);
+            newValue = changeValue(value,multiplier);
+        }
+        else {
             if (value.includes(" ")){
                 value = Number(value.toString().trim());
                 match.index++;
             }
             else{
                 value = Number(value);
+            }
+            // multiply value
+            newValue = (value * multiplier).toString();
+            if (newValue.includes(".")){
+                newValue = decimal2fraction(newValue);
             }
         }
 
@@ -100,13 +161,6 @@ function applyRegexAndMultiply(context, myRegex, multiplier) {
         let shift = charArray.length - ogLength;
         let startIX = match.index + shift;
         let endIX = myRegex.lastIndex + shift;
-
-        // multiply value
-        let newValue = (value * multiplier).toString();
-        if (newValue.includes(".")){
-            newValue = convertToFraction(newValue);
-        }
-
 
         // I learned that sometimes we need to "offset" the charArray to make room for a bigger number
         // i.e. if our value was 5 and our newValue is 10, then we need to account for 1 new char ("0")
@@ -123,41 +177,13 @@ function applyRegexAndMultiply(context, myRegex, multiplier) {
         // update the right element in the charArray accordingly
         for (let i = 0; i < newValue.length; i++) {
             charArray[startIX + i] = newValue[i];
-            console.log("new charArray",charArray);
+            // console.log("new charArray",charArray);
         }
     }
 
     // finally, return the new context, i.e. the charArray turned into a string
     return charArray.join("");
 }
-
-// TO BE IMPLEMENTED
-
-// multiplies fraction by some multiplier
-
-function convertToFraction(decimal) {
-
-    var gcd = function(a, b) {
-        if (b < 0.0000001) return a;                // Since there is a limited precision we need to limit the value.
-
-        return gcd(b, Math.floor(a % b));           // Discard any fractions due to limitations in precision.
-    };
-
-
-    var len = decimal.toString().length - 2;
-
-    var denominator = Math.pow(10, len);
-    var numerator = decimal * denominator;
-
-    var divisor = gcd(numerator, denominator);    // Should be 5
-
-    numerator /= divisor;                         // Should be 687
-    denominator /= divisor;                       // Should be 2000
-
-    return Math.floor(numerator) + '/' + Math.floor(denominator);
-}
-
-// do stuff and update webpage
 
 
 // Convert metrics of all ingredients

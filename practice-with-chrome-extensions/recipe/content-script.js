@@ -7,6 +7,8 @@ console.log('content-script.js')
 
  */
 
+
+
 // We know that on delish.com, the ingredients are stored in elements of class "ingredient-item", so:
 let htmlIngredientList = Array.from(document.getElementsByClassName("ingredient-item"));
 
@@ -21,7 +23,7 @@ htmlIngredientList.forEach(function (html) {
     let amt = ingredientInfo[0];
     // store that info
     ingredientList[name] = amt;
-})
+});
 
 console.log(ingredientList);
 
