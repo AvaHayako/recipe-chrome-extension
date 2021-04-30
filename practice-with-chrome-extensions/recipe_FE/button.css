@@ -1,3 +1,12 @@
+:root{
+
+    --light-red: #FF616A;
+    --deep-red: #E6003D;
+    --black: #231F20;
+    --white: #FFFFFF;
+    --off-white: #F6F6F6;
+}
+
 button {
     height: auto;
     width: auto;
@@ -10,4 +19,38 @@ button {
 button.current {
     box-shadow: 0 0 0 2px white,
     0 0 0 4px black;
+}
+
+html{
+    background-color: var(--off-white);
+}
+
+.btn{
+    text-align: center;
+    color: black;
+
+}
+
+.unit_buttons{
+    border-radius: 20%;
+
+}
+
+.checkbox-inline{
+    background-color: #C4C4C4;
+    color: var(--black);
+    align-content: center;
+}
+
+.exit_button{
+    border-radius: 5%;
+
+}
+
+.advance_btn{
+    border-radius: 10%;
+    background-color: var(--light-red);
+    color: var(--black);
+    text-align: center;
+
 }
