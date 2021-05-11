@@ -2,11 +2,12 @@
 <html>
 <head>
     <link rel="stylesheet" href="button.css">
+    <script src="popup.js"></script>
 </head>
 <body>
-<button id="half">Half the recipe</button>
-<button id="double">Double the recipe</button>
-<script src="popup.js"></script>
+<!--<button id="half">Half the recipe</button>-->
+<!--<button id="double">Double the recipe</button>-->
+
 
 <div class="button_section">
     <div class="measuring_units">
@@ -23,10 +24,9 @@
             Serving Size
         </label>
         <form>
-            <div class="checkbox checkbox-inline">
+            <div class="checkbox checkbox-inline" style>
                 <input class="form-check-input" type="radio" name="inlineRadioOptions" id="radioOriginal" value="option1">
                 <label class="form-check-label" for="radioOriginal">Original</label>
-
 
                 <input class="form-check-input" type="radio" name="inlineRadioOptions" id="radio1/4" value="option2">
                 <label class="form-check-label" for="radio1/4">1/4</label>
@@ -46,8 +46,8 @@
         </form>
 
     </div>
-    <div class="advance_buttons">
-        <button> <a class="btn btn-primary advance-btn" href="#" role="button">Profile</a> </button>
+    <div class="adv_btn advance_buttons" >
+        <button  class="btn btn-primary advance-btn" href="#" role="button" >Profile </button>
         <button class="btn btn-primary advance-btn" type="submit">Submit</button>
     </div>
 </div>

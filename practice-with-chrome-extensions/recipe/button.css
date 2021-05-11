@@ -7,7 +7,66 @@ button {
     border-radius: 2px;
 }
 
-button.current {
-    box-shadow: 0 0 0 2px white,
-    0 0 0 4px black;
+/*button.current {*/
+/*    box-shadow: 0 0 0 2px white,*/
+/*    0 0 0 4px black;*/
+/*}*/
+
+:root{
+
+    --light-red: #FF616A;
+    --deep-red: #E6003D;
+    --black: #231F20;
+    --white: #FFFFFF;
+    --off-white: #F6F6F6;
+}
+
+/*button {*/
+/*    height: auto;*/
+/*    width: auto;*/
+/*    outline: none;*/
+/*    margin: 10px;*/
+/*    border: none;*/
+/*    border-radius: 2px;*/
+/*}*/
+
+/*button.current {*/
+/*    box-shadow: 0 0 0 2px white,*/
+/*    0 0 0 4px black;*/
+/*}*/
+
+html{
+    background-color: var(--off-white);
+}
+
+.btn{
+    text-align: center;
+    color: black;
+    padding: 2%;
+
+}
+
+.unit_buttons{
+    border-radius: 20%;
+
+}
+
+.checkbox{
+    background-color : #c4c4c4;
+    color: var(--black);
+    text-align: center;
+    padding: 1%;
+}
+
+/*.exit_button{*/
+/*    border-radius: 5%;*/
+
+/*}*/
+
+.advance_buttons{
+    border-radius: 10%;
+    background-color: var(--light-red) !important;
+    color: var(--black);
+    text-align: center;
+
 }
