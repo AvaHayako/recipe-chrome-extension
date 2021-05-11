@@ -1,5 +1,10 @@
 // console.log('content-script.js')
 
+// Aidan can push to github from here by doing:
+// open gitbash HERE for recipe-chrome-extension
+// git add .
+// git commit -m "add commit notes here"
+// git push
 
 /*
     START OF:
@@ -75,7 +80,7 @@ function reProportion(multiplier) {
         // newContext = applyRegexAndMultiply(newContext,fractionRegex, multiplier);
         var newContext = applyRegexAndMultiply(context, allNumsRegex, multiplier);
 
-        $(this).context.innerHTML = "###"+newContext;
+        $(this).context.innerHTML = newContext;
         // $(this).context.css("color","orange");
         // I (Aidan) ADDED PLUS SIGNS ON THE OUTSIDE OF THE CONTEXT TO TRY TO DEBUG (but this will be commented)
         // $(this).context.innerHTML = "+" + newContext + "+";

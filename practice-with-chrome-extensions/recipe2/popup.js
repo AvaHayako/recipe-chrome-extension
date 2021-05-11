@@ -1,6 +1,16 @@
 // Add listener for "half" button.
 // If clicked, tell content-script by calling .executeScript
-let half = document.getElementById("half");
+
+// console.log("BUG before");
+// height = document.getElementById("content").offsetHeight;
+// width  = document.getElementById("content").offsetWidth;
+// self.resizeTo(width+200, height+100);
+// console.log("BUG after");
+
+
+window.resizeTo(400,400);
+
+let half = document.getElementById("radio1/2");
 half.addEventListener("click", async () => {
     let [tab] = await chrome.tabs.query({active: true, currentWindow: true});
 
@@ -13,7 +23,7 @@ half.addEventListener("click", async () => {
 
 // Add listener for "double" button.
 // If clicked, tell content-script by calling .executeScript
-let double = document.getElementById("double");
+let double = document.getElementById("radioX2");
 double.addEventListener("click", async () => {
     let [tab] = await chrome.tabs.query({active: true, currentWindow: true});
 
