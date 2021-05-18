@@ -7,6 +7,10 @@
     --off-white: #f6f6f6;
 }
 
+body {
+    width: 300px;
+}
+
 button {
     height: auto;
     width: auto;
@@ -23,6 +27,7 @@ button {
 
 html{
     background-color: var(--off-white);
+    width: 100px;
 }
 
 .btn{
