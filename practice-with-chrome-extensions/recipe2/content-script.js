@@ -1,4 +1,4 @@
-// console.log('content-script.js')
+console.log('content-script.js');
 
 // Aidan can push to github from here by doing:
 // open gitbash HERE for recipe-chrome-extension
@@ -169,11 +169,13 @@ function applyRegexAndMultiply(context, myRegex, multiplier) {
             // if value includes extra space(s) (due to regex filtering)
             // -> remove spaces and update indexes
             if (value.includes(" ")){
-                value = Number(value.toString().trim());
-                match.index++;
                 if (value.endsWith(" ")){
                     myRegex.lastIndex--;
                 }
+                else{
+                    match.index++;
+                }
+                value = Number(value.toString().trim());
             }
             else{
                 value = Number(value);
@@ -185,11 +187,7 @@ function applyRegexAndMultiply(context, myRegex, multiplier) {
             }
         }
 
-        // ANOTHER PROBLEM:
-        // preceding conversions in an ingredient string (e.g. in string "5 tb and 3 tsp", 5 tb will be converted before 3 tsp)
-        // may affect following conversions because the index of the string will be changed.
-        // "10 tb and 3 tsp"
-        // we try to account for that here.
+
         let shift = charArray.length - ogLength;
         let startIX = match.index + shift;
         let endIX = myRegex.lastIndex + shift;
@@ -204,23 +202,23 @@ function applyRegexAndMultiply(context, myRegex, multiplier) {
                 + charArray.join("").substring(endIX, charArray.length)).split("");
         }
         else if (offset < 0) {
-            charArray = (charArray.join("").substring(0, startIX+1-offset)
+            console.log("THIS SHOULD HAPPEN FOR",charArray);
+            charArray = (charArray.join("").substring(0, startIX-offset)
                 +" ".repeat(Math.abs(offset))
                 + charArray.join("").substring(endIX-1-offset, charArray.length)).split("");
+
         }
 
-        // for each char of the newValue (e.g. "10"),
-        // update the right element in the charArray accordingly
-
-        // ONLY WORKS FOR FRACTIONS, NOT WHOLE NUMBERS >:(
         console.log("old value: ",value,"\nnew value: ",newValue);
-        if (offset<0){
-            newValue= newValue + " ".repeat(Math.abs(offset));
-        }
+        // if (offset<0){
+        //     newValue= newValue + " ".repeat(Math.abs(offset));
+        // }
         for (let i = 0; i < newValue.length; i++) {
+            console.log("start index (",startIX, ")",i,"==",(startIX+i));
             charArray[startIX + i] = newValue[i];
             console.log("new",charArray[startIX+i],"->",newValue[i]);
         }
+        console.log("NOW ITS",charArray);
     }
 
     // finally, return the new context, i.e. the charArray turned into a string
