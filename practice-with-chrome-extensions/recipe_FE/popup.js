@@ -15,9 +15,10 @@ has been triggered, and what information needs to be changed (see comment block 
 
 // Add listener for "half" button.
 // If clicked, tell content-script.js by calling .executeScript
-let half = document.getElementById("half");
+let half = document.getElementById("radio1/2");
 half.addEventListener("click", async () => {
     let [tab] = await chrome.tabs.query({active: true, currentWindow: true});
+
 
     /*
     The next line is where we prepare to send a message to the content script
@@ -39,10 +40,33 @@ half.addEventListener("click", async () => {
 
 });
 
+// Add listener for "origianl" button.
+// If clicked, tell content-script.js by calling .executeScript
+let original = document.getElementById("radioOriginal");
+original.addEventListener("click", async () => {
+    let [tab] = await chrome.tabs.query({active: true, currentWindow: true});
+
+    chrome.scripting.executeScript({
+        target: {tabId: tab.id},
+        function: sendMessageToCS({task:'reProportion',val:'1'}, tab)
+    })
+})
+
+// Add listener for "quarter" button.
+// If clicked, tell content-script.js by calling .executeScript
+let quarter = document.getElementById("radio1/4");
+quarter.addEventListener("click", async () => {
+    let [tab] = await chrome.tabs.query({active: true, currentWindow: true});
+
+    chrome.scripting.executeScript({
+        target: {tabId: tab.id},
+        function: sendMessageToCS({task:'reProportion',val:'.25'}, tab)
+    })
+})
 
 // Add listener for "double" button.
 // If clicked, tell content-script.js by calling .executeScript
-let double = document.getElementById("double");
+let double = document.getElementById("radioX2");
 double.addEventListener("click", async () => {
     let [tab] = await chrome.tabs.query({active: true, currentWindow: true});
 
@@ -52,7 +76,15 @@ double.addEventListener("click", async () => {
     })
 })
 
+let convert = document.getElementById("toMetric");
+convert.addEventListener("click", async () => {
+    let [tab] = await chrome.tabs.query({active: true, currentWindow: true});
 
+    chrome.scripting.executeScript({
+        target: {tabId: tab.id},
+        function: sendMessageToCS({task:'convert',val:'toMetric'}, tab)
+    })
+})
 
 
 /*  In order for the content-script to know what to do and when to do it,
