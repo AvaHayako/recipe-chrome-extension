@@ -23,6 +23,16 @@ double.addEventListener("click", async () => {
     });
 });
 
+let toMetric = document.getElementById("toMetric");
+toMetric.addEventListener("click", async () => {
+    let [tab] = await chrome.tabs.query({active: true, currentWindow: true});
+
+    chrome.scripting.executeScript({
+        target: {tabId: tab.id},
+        function: sendMessageToCS('metric', tab)
+    });
+});
+
 
 /*  In order for our content-script to know what to do and when to do it,
     we will do something called "message passing"
@@ -31,7 +41,6 @@ double.addEventListener("click", async () => {
     The content-script will wait until it receives that message,
     handle the message, then execute a script in response.*/
 function sendMessageToCS(message, tab) {
-
     chrome.tabs.query({active: true, currentWindow: true}, function (tabs) {
         chrome.tabs.sendMessage(tab.id, message, function (response) {
         });
