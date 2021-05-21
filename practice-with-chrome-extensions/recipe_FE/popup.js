@@ -105,5 +105,3 @@ function sendMessageToCS(message, tab) {
 
 
 }
-
-
