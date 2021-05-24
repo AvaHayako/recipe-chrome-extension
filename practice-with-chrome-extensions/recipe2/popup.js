@@ -45,6 +45,7 @@ function sendMessageToCS(message, tab) {
         chrome.tabs.sendMessage(tab.id, message, function (response) {
         });
     });
+    return function (){return "done"};
 }
 
 

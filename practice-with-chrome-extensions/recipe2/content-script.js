@@ -35,6 +35,14 @@ function simplify(fract, m) {
 
         return (nume / denom).toString()
     } else { // when there is a fraction
+        if (nume>denom){
+            let newFract = fractionToMixedFraction(nume,denom,true);
+            let a = newFract[0];
+            let b = newFract[1];
+            let c = newFract[2];
+            const myGCD = gcd(b,c);
+            return a.toString() + " " + (b/myGCD).toString() + "/" + (c/myGCD).toString();
+        }
         const myGCD = gcd(nume, denom);
         return (nume / myGCD).toString() + "/" + (denom / myGCD).toString();
     }
@@ -45,7 +53,22 @@ function decimal2fraction(dec) {
     const nume = dec * 100;
     const denom = 100;
     const myGCD = gcd(nume, denom);
-    return (nume / myGCD).toString() + "/" + (denom / myGCD).toString();
+    let out = (nume / myGCD).toString() + "/" + (denom / myGCD).toString();
+    if (nume > denom) {
+        out = fractionToMixedFraction(nume,denom);
+    }
+
+    return out;
+}
+
+function fractionToMixedFraction(nume,denom,returnNums=false){
+    let whole = Math.floor(nume/denom);
+    if (returnNums){
+        return [whole, (nume%denom),denom];
+    }
+    let newNume = nume%denom;
+    const myGCD = gcd(newNume,denom);
+    return whole.toString() + " " + (newNume/myGCD).toString() + "/" + (denom/myGCD).toString();
 }
 
 // determines if a number is a fraction, mixed fraction, whole number and sends it to simplify
@@ -78,21 +101,32 @@ function applyRegexAndMultiply(context, myRegex, multiplier) {
     while ((match = myRegex.exec(context)) !== null) {
         var value = match[0]; // e.g. "5"
         var newValue;
+        var endsWSpace = false;
+        console.log("DEBUG dealing with "+value);
+        if (value.includes("-") || value.includes(";")){
+            if (value.startsWith("-") || value.startsWith(";")){
+                match.index++;
+            }
+            else{
+                myRegex.index--;
+            }
+            value = value.replaceAll("-","").replaceAll(";","");
+        }
+        if (value.startsWith(" ")) {
+            match.index++;
+            value = value.toString().slice(1,value.length);
+        }
+        else if(value.endsWith(" ")){
+            myRegex.lastIndex--;
+            endsWSpace = true;
+            value = value.toString().slice(0,value.length-1);
+        }
+
         if (value.includes("/")) {
             newValue = changeValue(value, multiplier);
-        } else {
-            // if value includes extra space(s) (due to regex filtering)
-            // -> remove spaces and update indexes
-            if (value.includes(" ")) {
-                if (value.endsWith(" ")) {
-                    myRegex.lastIndex--;
-                } else {
-                    match.index++;
-                }
-                value = Number(value.toString().trim());
-            } else {
-                value = Number(value);
-            }
+        }
+        else {
+            value = Number(value);
             // multiply value
             newValue = (value * multiplier).toString();
             if (newValue.includes(".")) {
@@ -101,20 +135,37 @@ function applyRegexAndMultiply(context, myRegex, multiplier) {
         }
 
         let shift = charArray.length - ogLength;
+        let offset = newValue.length - value.toString().length;
+
+        if (match.index >= 0){ // added >=0 and it did nothing
+            if(endsWSpace){
+                shift++;
+            }
+        }
+
         let startIX = match.index + shift;
         let endIX = myRegex.lastIndex + shift;
 
-        // I learned that sometimes we need to "offset" the charArray to make room for shorter/longer numbers
-        let offset = newValue.length - value.toString().length;
-        if (offset > 0) {
-            charArray = (charArray.join("").substring(0, startIX + 1)
-                + " ".repeat(offset)
-                + charArray.join("").substring(endIX, charArray.length)).split("");
-        } else if (offset < 0) {
-            charArray = (charArray.join("").substring(0, startIX - offset)
-                + " ".repeat(Math.abs(offset))
-                + charArray.join("").substring(endIX - 1 - offset, charArray.length)).split("");
+        let front =  charArray.join("").substring(0, startIX+1);
+
+        let middle = " ".repeat(value.length);
+        if ((Math.abs(offset)+shift)>0){
+            middle += " ".repeat(Math.abs(offset)+shift+1);
         }
+
+        let back = charArray.join("").substring(endIX, charArray.length);
+
+        let print = ("DEBUG:\n\n"
+                    + "size of shift: " + shift + "\n"
+                    + "size of offset: " + offset + "\n\n"
+                    + "start "+startIX+", end "+endIX+'\n\n'
+                    + front.replaceAll(" ","#") + "\n\n"
+                    + middle.replaceAll(" ","#") +"\n\n"
+                    + "(what will be) new middle: " + newValue + "\n\n (no longer "+value+")\n\n"
+                    + back.replaceAll(" ","#"));
+        console.log(print);
+
+        charArray = (front + middle + back).split("");
 
         for (let i = 0; i < newValue.length; i++) {
             charArray[startIX + i] = newValue[i];
