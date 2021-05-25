@@ -1,13 +1,18 @@
+console.log("DEBUG enter content script")
+
 chrome.runtime.onMessage.addListener(function (message, sender, sendResponse) {
 
     console.log("DEBUG message from CS: " + message);
+    let mess = message.split(",");
+    let measurementClick = mess[0];
+    let metricClick = mess[1];
 
-    if (hasNumber(message.toString())) {
-        reProportion(Number(message));
+    if (hasNumber(measurementClick)) {
+        reProportion(Number(measurementClick));
     }
 
-    if (message.toString() === "metric") {
-        convertMetrics(message);
+    if (metricClick==="true") {
+        convertMetrics(metricClick);
     }
 });
 

@@ -8,7 +8,6 @@
 
 let measurementClick = '';
 let metricClick = false;
-let submitClick = false;
 
 // Add listener for "half" button.
 // If clicked, tell content-script.js by calling .executeScript
@@ -56,15 +55,14 @@ convert.addEventListener("click", async () => {
 })
 
 let submit = document.getElementById("submit_button");
-submit.addEventListener("submit", async () => {
+submit.addEventListener("click", async () => {
     let [tab] = await chrome.tabs.query({active: true, currentWindow: true});
 
     console.log('DEBUG submit has been clicked');
 
-    submitClick = true;
     chrome.scripting.executeScript({
         target: {tabId: tab.id},
-        function: sendMessageToCS({task:'submit',measurementClicked: measurementClick, metricClicked:metricClick}, tab)
+        function: sendMessageToCS(`${measurementClick},${metricClick}`, tab)
     })
 })
 
@@ -79,7 +77,7 @@ submit.addEventListener("submit", async () => {
 */
 function sendMessageToCS(message, tab) {
     console.log('DEBUG sending message to CS');
-    if (measurementClick !== '' && metricClick) {
+    if (measurementClick !== '' || metricClick) {
         chrome.tabs.query({active: true, currentWindow: true}, function (tabs) {
             chrome.tabs.sendMessage(tab.id, message, function (response) {
             });
