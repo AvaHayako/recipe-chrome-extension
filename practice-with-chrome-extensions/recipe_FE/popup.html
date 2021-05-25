@@ -28,15 +28,15 @@
 <!--                Measuring Units-->
 <!--            </label>-->
             <label> Convert to Metric Units </label>
-            <div class="unit_buttons">
-
-                <button id="toMetric" class="btn btn-danger" >Convert</button>
-<!--                <button class="btn btn-primary" type="metric">Metric</button>-->
-<!--                <button class="btn btn-primary" type="imperial">Imperial</button>-->
+            <div class="unit_buttons form-check">
+                    <input class="form-check-input" type="checkbox" value="" id="flexCheckDefault">
+                    <label class="form-check-label" for="flexCheckDefault">
+                        if so, click here
+                    </label>
             </div>
         </div>
     <br>
-    <form>
+    <form id="portions_form">
         <div class="serving_size" >
             <label class="serving_label">
                 Serving Size
@@ -66,7 +66,7 @@
         <br>
         <label> Ready to change the portion sizes?</label>
         <div class="submit_btn adv_btn advance_buttons" >
-            <button class="btn btn-danger advance-btn" type="submit" >Submit</button>
+            <button id = "submit_button" class="btn btn-danger advance-btn" type="submit" >Submit</button>
         </div>
     </form>
 
