@@ -1,9 +1,9 @@
 {
   "manifest_version": 3,
 
-  "name": "recipe",
+  "name": "recipe merged",
   "description": "This is an early attempt at our recipe extension",
-  "version": "0.0.1",
+  "version": "0.0.2",
 
   "icons": { "16": "icons/icon-16.png",
     "48": "icons/icon-48.png",
@@ -25,7 +25,7 @@
 
   "content_scripts": [
     {
-      "matches": ["https://www.delish.com/*"],
+      "matches": ["https://www.foodnetwork.com/recipes/*"],
       "js": ["jquery-2.1.4.min.js", "content-script.js"]
     }
   ]
