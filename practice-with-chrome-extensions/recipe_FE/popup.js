@@ -16,75 +16,93 @@ has been triggered, and what information needs to be changed (see comment block 
 // Add listener for "half" button.
 // If clicked, tell content-script.js by calling .executeScript
 let half = document.getElementById("radio1/2");
-half.addEventListener("click", async () => {
-    let [tab] = await chrome.tabs.query({active: true, currentWindow: true});
-
-
-    /*
-    The next line is where we prepare to send a message to the content script
-    Use this for tasks that need to be done on the content-script end.
-    The only argument that FE will want to edit is "message", where:
-
-         * To multiply the ingredients measurements:
-            message: {task: 'reProportion',value: <<value you want to multiple by>>)}
-        * To convert the units of measurements:
-            message: {task: 'convert', value: <<'toUS' OR 'toMetric'}
-        * To substitute an ingredient
-            message: {task: 'substitute', value: << String version of a structure such as {'chicken':'tofu', milk: 'almond milk'}>>}
-    */
-
-    chrome.scripting.executeScript({
-        target: {tabId: tab.id},
-        function: sendMessageToCS({task:'reProportion',value:'.5'}, tab)
-    });
-
-});
+// half.addEventListener("click", async () => {
+//     let [tab] = await chrome.tabs.query({active: true, currentWindow: true});
+//
+//
+//     /*
+//     The next line is where we prepare to send a message to the content script
+//     Use this for tasks that need to be done on the content-script end.
+//     The only argument that FE will want to edit is "message", where:
+//
+//          * To multiply the ingredients measurements:
+//             message: {task: 'reProportion',value: <<value you want to multiple by>>)}
+//         * To convert the units of measurements:
+//             message: {task: 'convert', value: <<'toUS' OR 'toMetric'}
+//         * To substitute an ingredient
+//             message: {task: 'substitute', value: << String version of a structure such as {'chicken':'tofu', milk: 'almond milk'}>>}
+//     */
+//
+//     chrome.scripting.executeScript({
+//         target: {tabId: tab.id},
+//         function: sendMessageToCS({task:'reProportion',value:'.5'}, tab)
+//     });
+//
+// });
 
 // Add listener for "origianl" button.
 // If clicked, tell content-script.js by calling .executeScript
 let original = document.getElementById("radioOriginal");
-original.addEventListener("click", async () => {
-    let [tab] = await chrome.tabs.query({active: true, currentWindow: true});
-
-    chrome.scripting.executeScript({
-        target: {tabId: tab.id},
-        function: sendMessageToCS({task:'reProportion',val:'1'}, tab)
-    })
-})
+// original.addEventListener("click", async () => {
+//     let [tab] = await chrome.tabs.query({active: true, currentWindow: true});
+//
+//     chrome.scripting.executeScript({
+//         target: {tabId: tab.id},
+//         function: sendMessageToCS({task:'reProportion',val:'1'}, tab)
+//     })
+// })
 
 // Add listener for "quarter" button.
 // If clicked, tell content-script.js by calling .executeScript
 let quarter = document.getElementById("radio1/4");
-quarter.addEventListener("click", async () => {
-    let [tab] = await chrome.tabs.query({active: true, currentWindow: true});
-
-    chrome.scripting.executeScript({
-        target: {tabId: tab.id},
-        function: sendMessageToCS({task:'reProportion',val:'.25'}, tab)
-    })
-})
+// quarter.addEventListener("click", async () => {
+//     let [tab] = await chrome.tabs.query({active: true, currentWindow: true});
+//
+//     chrome.scripting.executeScript({
+//         target: {tabId: tab.id},
+//         function: sendMessageToCS({task:'reProportion',val:'.25'}, tab)
+//     })
+// })
 
 // Add listener for "double" button.
 // If clicked, tell content-script.js by calling .executeScript
 let double = document.getElementById("radioX2");
-double.addEventListener("click", async () => {
-    let [tab] = await chrome.tabs.query({active: true, currentWindow: true});
-
-    chrome.scripting.executeScript({
-        target: {tabId: tab.id},
-        function: sendMessageToCS({task:'reProportion',val:'2'}, tab)
-    })
-})
+// double.addEventListener("click", async () => {
+//     let [tab] = await chrome.tabs.query({active: true, currentWindow: true});
+//
+//     chrome.scripting.executeScript({
+//         target: {tabId: tab.id},
+//         function: sendMessageToCS({task:'reProportion',val:'2'}, tab)
+//     })
+// })
 
 let convert = document.getElementById("toMetric");
-convert.addEventListener("click", async () => {
-    let [tab] = await chrome.tabs.query({active: true, currentWindow: true});
+// convert.addEventListener("click", async () => {
+//     let [tab] = await chrome.tabs.query({active: true, currentWindow: true});
+//
+//     chrome.scripting.executeScript({
+//         target: {tabId: tab.id},
+//         function: sendMessageToCS({task:'convert',val:'toMetric'}, tab)
+//     })
+// })
 
-    chrome.scripting.executeScript({
+/* setting a button listener for the submit, the user's selected choices shall change
+once this is pressed  */
+
+let submit = document.getElementById("submit_button")
+submit.addEventListener("submit", async () => {
+
+        chrome.scripting.executeScript({
         target: {tabId: tab.id},
-        function: sendMessageToCS({task:'convert',val:'toMetric'}, tab)
+        function: sendMessageToCS({task:'submit',val:'submit_button'}, tab)
     })
 })
+let clicked = document.getElementsByClassName("")
+let metricClicked = document.getElementById()
+$("#portions_form").change(function () {
+    if (check)
+    $('form').submit();
+});
 
 
 /*  In order for the content-script to know what to do and when to do it,

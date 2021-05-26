@@ -21,12 +21,13 @@
     "scripting",
     "storage",
     "tabs"
+
   ],
 
   "content_scripts": [
     {
       "matches": ["https://www.foodnetwork.com/recipes/*"],
-      "js": ["jquery-2.1.4.min.js", "content-script.js"]
+      "js": ["js/jquery-3.2.1.min.js", "content-script.js"]
     }
   ]
 }
