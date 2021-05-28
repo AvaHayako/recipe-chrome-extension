@@ -7,23 +7,28 @@ chrome.runtime.onMessage.addListener(function (message, sender, sendResponse) {
     let measurementClick = mess[0];
     let metricClick = mess[1];
 
-    if (hasNumber(measurementClick)) {
-        reProportion(Number(measurementClick));
+    if (metricClick === "true") {
+        convertMetrics("metric");
     }
 
-    if (metricClick==="true") {
-        convertMetrics(metricClick);
+    if (hasNumber(measurementClick)) {
+        reProportion(Number(measurementClick));
     }
 });
 
 // goes through each ingredient item and changes its HTML contents based on desired portion
 function reProportion(multiplier) {
     $.each($('.o-Ingredients__a-Ingredient--CheckboxLabel'), function () {
-        let context = $(this).context.innerHTML;
-        var allNumsRegex = new RegExp(/(\d+\s+\d[/]\d)|((?<!\d\s)\d[/]\d)|((\b[^/]\d[^/]\b)|(\b(?<!(\d\s|[/]))\d(?!(\s\d|[/]))\b))/g);
-        var newContext = applyRegexAndMultiply(context, allNumsRegex, multiplier);
+        console.log("element", $(this));
+        console.log("innerHTML", $(this)[0].innerHTML);
 
-        $(this).context.innerHTML = newContext;
+        if ($(this)[0].innerHTML) {
+            let context = $(this)[0].innerHTML;
+            var allNumsRegex = new RegExp(/(\d+\s+\d[/]\d)|((?<!\d\s)\d[/]\d)|((\b[^/]\d[^/]\b)|(\b(?<!(\d\s|[/]))\d(?!(\s\d|[/]))\b))/g);
+            var newContext = applyRegexAndMultiply(context, allNumsRegex, multiplier);
+
+            $(this)[0].innerHTML = newContext;
+        }
     });
 }
 
@@ -44,13 +49,13 @@ function simplify(fract, m) {
 
         return (nume / denom).toString()
     } else { // when there is a fraction
-        if (nume>denom){
-            let newFract = fractionToMixedFraction(nume,denom,true);
+        if (nume > denom) {
+            let newFract = fractionToMixedFraction(nume, denom, true);
             let a = newFract[0];
             let b = newFract[1];
             let c = newFract[2];
-            const myGCD = gcd(b,c);
-            return a.toString() + " " + (b/myGCD).toString() + "/" + (c/myGCD).toString();
+            const myGCD = gcd(b, c);
+            return a.toString() + " " + (b / myGCD).toString() + "/" + (c / myGCD).toString();
         }
         const myGCD = gcd(nume, denom);
         return (nume / myGCD).toString() + "/" + (denom / myGCD).toString();
@@ -64,20 +69,20 @@ function decimal2fraction(dec) {
     const myGCD = gcd(nume, denom);
     let out = (nume / myGCD).toString() + "/" + (denom / myGCD).toString();
     if (nume > denom) {
-        out = fractionToMixedFraction(nume,denom);
+        out = fractionToMixedFraction(nume, denom);
     }
 
     return out;
 }
 
-function fractionToMixedFraction(nume,denom,returnNums=false){
-    let whole = Math.floor(nume/denom);
-    if (returnNums){
-        return [whole, (nume%denom),denom];
+function fractionToMixedFraction(nume, denom, returnNums = false) {
+    let whole = Math.floor(nume / denom);
+    if (returnNums) {
+        return [whole, (nume % denom), denom];
     }
-    let newNume = nume%denom;
-    const myGCD = gcd(newNume,denom);
-    return whole.toString() + " " + (newNume/myGCD).toString() + "/" + (denom/myGCD).toString();
+    let newNume = nume % denom;
+    const myGCD = gcd(newNume, denom);
+    return whole.toString() + " " + (newNume / myGCD).toString() + "/" + (denom / myGCD).toString();
 }
 
 // determines if a number is a fraction, mixed fraction, whole number and sends it to simplify
@@ -111,30 +116,27 @@ function applyRegexAndMultiply(context, myRegex, multiplier) {
         var value = match[0]; // e.g. "5"
         var newValue;
         var endsWSpace = false;
-        console.log("DEBUG dealing with "+value);
-        if (value.includes("-") || value.includes(";")){
-            if (value.startsWith("-") || value.startsWith(";")){
+        console.log("DEBUG dealing with " + value);
+        if (value.includes("-") || value.includes(";")) {
+            if (value.startsWith("-") || value.startsWith(";")) {
                 match.index++;
-            }
-            else{
+            } else {
                 myRegex.index--;
             }
-            value = value.replaceAll("-","").replaceAll(";","");
+            value = value.replaceAll("-", "").replaceAll(";", "");
         }
         if (value.startsWith(" ")) {
             match.index++;
-            value = value.toString().slice(1,value.length);
-        }
-        else if(value.endsWith(" ")){
+            value = value.toString().slice(1, value.length);
+        } else if (value.endsWith(" ")) {
             myRegex.lastIndex--;
             endsWSpace = true;
-            value = value.toString().slice(0,value.length-1);
+            value = value.toString().slice(0, value.length - 1);
         }
 
         if (value.includes("/")) {
             newValue = changeValue(value, multiplier);
-        }
-        else {
+        } else {
             value = Number(value);
             // multiply value
             newValue = (value * multiplier).toString();
@@ -146,8 +148,8 @@ function applyRegexAndMultiply(context, myRegex, multiplier) {
         let shift = charArray.length - ogLength;
         let offset = newValue.length - value.toString().length;
 
-        if (match.index >= 0){ // added >=0 and it did nothing
-            if(endsWSpace){
+        if (match.index >= 0) { // added >=0 and it did nothing
+            if (endsWSpace) {
                 shift++;
             }
         }
@@ -155,23 +157,23 @@ function applyRegexAndMultiply(context, myRegex, multiplier) {
         let startIX = match.index + shift;
         let endIX = myRegex.lastIndex + shift;
 
-        let front =  charArray.join("").substring(0, startIX+1);
+        let front = charArray.join("").substring(0, startIX + 1);
 
         let middle = " ".repeat(value.length);
-        if ((Math.abs(offset)+shift)>0){
-            middle += " ".repeat(Math.abs(offset)+shift+1);
+        if ((Math.abs(offset) + shift) > 0) {
+            middle += " ".repeat(Math.abs(offset) + shift + 1);
         }
 
         let back = charArray.join("").substring(endIX, charArray.length);
 
         let print = ("DEBUG:\n\n"
-                    + "size of shift: " + shift + "\n"
-                    + "size of offset: " + offset + "\n\n"
-                    + "start "+startIX+", end "+endIX+'\n\n'
-                    + front.replaceAll(" ","#") + "\n\n"
-                    + middle.replaceAll(" ","#") +"\n\n"
-                    + "(what will be) new middle: " + newValue + "\n\n (no longer "+value+")\n\n"
-                    + back.replaceAll(" ","#"));
+            + "size of shift: " + shift + "\n"
+            + "size of offset: " + offset + "\n\n"
+            + "start " + startIX + ", end " + endIX + '\n\n'
+            + front.replaceAll(" ", "#") + "\n\n"
+            + middle.replaceAll(" ", "#") + "\n\n"
+            + "(what will be) new middle: " + newValue + "\n\n (no longer " + value + ")\n\n"
+            + back.replaceAll(" ", "#"));
         console.log(print);
 
         charArray = (front + middle + back).split("");
@@ -191,7 +193,7 @@ function convertMetrics(measurementType) {
     if (measurementType === "metric") {
         let prunedContexts = [];
         $.each($('.o-Ingredients__a-Ingredient--CheckboxLabel'), function () {
-            const context = $(this).context.innerHTML;
+            const context = $(this)[0].innerHTML;
             if (!context.includes("Deselect")) {
                 prunedContexts.push(context.split(" "));
             }
@@ -204,10 +206,10 @@ function convertMetrics(measurementType) {
         // console.log("prunedContexts: ", prunedContexts);
 
         $.each($('.o-Ingredients__a-Ingredient--CheckboxLabel'), function (index) {
-            const context = $(this).context.innerHTML;
+            const context = $(this)[0].innerHTML;
 
             if (!context.includes("Deselect")) {
-                $(this).context.innerHTML = prunedContexts[index - 1].join(" ");
+                $(this)[0].innerHTML = prunedContexts[index - 1].join(" ");
             }
         });
     }
@@ -335,3 +337,4 @@ function getNum(array) {
 
     return [value, i, size];
 }
+

@@ -1,47 +1,277 @@
-console.log('content-script.js')
-
-
-/*
-    FUNCTIONALITY of content-script.js
-
-    This file is really just the skeleton code for executing conversions, substitutions, etc. and changing the text on
-    the page.
-    We removed the code that actually changes stuff just because y'all don't need to worry about it when it comes
-    to the design of the popup. Instead, when a task is triggered (e.g. a user clicks to double the recipe),
-    this code will just trigger an alert to the browser tab that says "user wants to <task>"
-*/
-
 chrome.runtime.onMessage.addListener(function (message, sender, sendResponse) {
-    // Handle message.
-
-    let task = message.task;
-    console.log(task);
-
-    if (task === 'reProportion') {
-        reProportion(Number(message.value));
+    console.log("message ,", message);
+    if (hasNumber(message.toString())) {
+        reProportion(Number(message));
+    } else if (message.toString() === "metric") {
+        convertMetrics(message);
     }
-    else if (task === 'convert') {
-        convertMetrics(message.value);
-    }
-    else if (task === 'substitute') {
-        makeSubstitutions(message.value);
-    }
-
 });
 
-
-// Re-proportion all ingredients by some multiplier
+// goes through each ingredient item and changes its HTML contents based on desired portion
 function reProportion(multiplier) {
-    alert("user wants to re-proportion measurements");
+    $.each($('.o-Ingredients__a-Ingredient--CheckboxLabel'), function () {
+        let context = $(this).context.innerHTML;
+        var allNumsRegex = new RegExp(/(\d+\s+\d[/]\d)|((?<!\d\s)\d[/]\d)|((\b[^/]\d[^/]\b)|(\b(?<!(\d\s|[/]))\d(?!(\s\d|[/]))\b))/g);
+        var newContext = applyRegexAndMultiply(context, allNumsRegex, multiplier);
+
+        $(this).context.innerHTML = newContext;
+    });
 }
 
+// finds greatest common denominator between two numbers
+var gcd = function (a, b) {
+    if (!b) return a;
 
-function convertMetrics(isImperial) {
-    alert("user wants to convert the measurement type");
+    return gcd(b, a % b);
+};
+
+// converts fractions to floats
+function simplify(fract, m) {
+    const nume = fract.split("/")[0] * m * 1000;
+    const denom = fract.split("/")[1] * 1000;
+
+    if (nume % denom === 0) { // when there is no fraction after multiplication
+        console.log("new IN SPECIAL CASE: ", (nume / denom).toString());
+
+        return (nume / denom).toString()
+    } else { // when there is a fraction
+        const myGCD = gcd(nume, denom);
+        return (nume / myGCD).toString() + "/" + (denom / myGCD).toString();
+    }
 }
 
-// Make substitutions to specific ingredients
-function makeSubstitutions(ingredients) {
-    alert("user wants to make substitutions");
+// converts floats to fractions
+function decimal2fraction(dec) {
+    const nume = dec * 100;
+    const denom = 100;
+    const myGCD = gcd(nume, denom);
+    return (nume / myGCD).toString() + "/" + (denom / myGCD).toString();
+}
 
+// determines if a number is a fraction, mixed fraction, whole number and sends it to simplify
+function changeValue(input, mult) {
+    let out = "";
+
+    const splitInput = input.split(" ");
+
+    if (splitInput.length === 1) { // HANDLE NORMAL CASE
+        out = simplify(splitInput[0], mult);
+    } else { // HANDLE MIX FRACTION CASE
+        const whole = parseInt(splitInput[0]);
+        const numerator = parseInt(splitInput[1].split('/')[0]);
+        const denomonator = parseInt(splitInput[1].split('/')[1]);
+        const unsimplified = (whole * denomonator + numerator).toString() + "/" + denomonator.toString();
+        out = simplify(unsimplified, mult);
+    }
+    return (out);
+}
+
+/* Applies regex function to the context (innerHTML) of some element on a FoodNetwork recipe.
+    The goal is to multiply ingredients by some value. */
+function applyRegexAndMultiply(context, myRegex, multiplier) {
+    // split up context into char array, so it's easier to change values of
+    let charArray = context.split("");
+    let ogLength = charArray.length;
+
+    /*    while there are matches in the context for our regex expression
+        (e.g. the string "5 tablespoons and 1 teaspoon" has 2 matches for wholeNumberRegex)*/
+    while ((match = myRegex.exec(context)) !== null) {
+        var value = match[0]; // e.g. "5"
+        var newValue;
+        if (value.includes("/")) {
+            newValue = changeValue(value, multiplier);
+        } else {
+            // if value includes extra space(s) (due to regex filtering)
+            // -> remove spaces and update indexes
+            if (value.includes(" ")) {
+                if (value.endsWith(" ")) {
+                    myRegex.lastIndex--;
+                } else {
+                    match.index++;
+                }
+                value = Number(value.toString().trim());
+            } else {
+                value = Number(value);
+            }
+            // multiply value
+            newValue = (value * multiplier).toString();
+            if (newValue.includes(".")) {
+                newValue = decimal2fraction(newValue);
+            }
+        }
+
+        let shift = charArray.length - ogLength;
+        let startIX = match.index + shift;
+        let endIX = myRegex.lastIndex + shift;
+
+        // I learned that sometimes we need to "offset" the charArray to make room for shorter/longer numbers
+        let offset = newValue.length - value.toString().length;
+        if (offset > 0) {
+            charArray = (charArray.join("").substring(0, startIX + 1)
+                + " ".repeat(offset)
+                + charArray.join("").substring(endIX, charArray.length)).split("");
+        } else if (offset < 0) {
+            charArray = (charArray.join("").substring(0, startIX - offset)
+                + " ".repeat(Math.abs(offset))
+                + charArray.join("").substring(endIX - 1 - offset, charArray.length)).split("");
+        }
+
+        for (let i = 0; i < newValue.length; i++) {
+            charArray[startIX + i] = newValue[i];
+        }
+    }
+
+    // finally, return the new context, i.e. the charArray turned into a string
+    return charArray.join("");
+}
+
+// Convert metrics of all ingredients
+function convertMetrics(measurementType) {
+    // if desired measurement system is metric, need to convert
+    if (measurementType === "metric") {
+        let prunedContexts = [];
+        $.each($('.o-Ingredients__a-Ingredient--CheckboxLabel'), function () {
+            const context = $(this).context.innerHTML;
+            if (!context.includes("Deselect")) {
+                prunedContexts.push(context.split(" "));
+            }
+        });
+        // pruned is a list of lists of words in each ingredient line
+        prunedContexts.forEach(function (contextArray, idx) {
+            // console.log("converting: ",contextArray);
+            prunedContexts[idx] = convertContext(contextArray, measurementType);
+        });
+        // console.log("prunedContexts: ", prunedContexts);
+
+        $.each($('.o-Ingredients__a-Ingredient--CheckboxLabel'), function (index) {
+            const context = $(this).context.innerHTML;
+
+            if (!context.includes("Deselect")) {
+                $(this).context.innerHTML = prunedContexts[index - 1].join(" ");
+            }
+        });
+    }
+    // do stuff and update webpage
+}
+
+// array parameter is the list of all words in one ingredient line
+function convertContext(array, measurementType) {
+    let convertedOutput = array;
+    let convertMe = 0;
+    let numberIndex = 0;
+    let size = 0;
+
+    // determining if there is even a number to convert for this ingredient line
+    let convertible = hasNumber(array.join(""));
+
+    // if we would like to convert from U.S. to metric, we go here
+    if (convertible && measurementType === "metric") {
+        // fetching number converted from getNum()
+        [convertMe, numberIndex, size] = getNum(array);
+
+        // this is where we find measurement type, apply conversion to appropriate metric type
+        if (array.includes("cup") || array.includes("cups")) {
+            const ml = Math.floor(convertMe * 236.59)
+            const litres = convertMe * 0.236
+            if (ml >= 1000) {
+                convertedOutput[numberIndex] = litres.toString();
+                convertedOutput[numberIndex + size] = "L";
+            } else {
+                convertedOutput[numberIndex] = ml.toString();
+                convertedOutput[numberIndex + size] = "mL";
+            }
+        } else if (array.includes("teaspoon") || array.includes("teaspoons")) {
+            convertedOutput[numberIndex] = (convertMe * 4.93).toString();
+            convertedOutput[numberIndex + size] = "mL";
+        } else if (array.includes("tablespoon") || array.includes("tablespoons")) {
+            convertedOutput[numberIndex] = (convertMe * 14.79).toString();
+            convertedOutput[numberIndex + size] = "mL";
+        } else if (array.includes("pint") || array.includes("pints")) {
+            const ml = Math.floor(convertMe * 473.18)
+            const litres = convertMe * 0.473
+            if (ml >= 1000) {
+                convertedOutput[numberIndex] = litres.toString();
+                convertedOutput[numberIndex + size] = "L";
+            } else {
+                convertedOutput[numberIndex] = ml.toString();
+                convertedOutput[numberIndex + size] = "mL";
+            }
+        } else if (array.includes("quart") || array.includes("quarts")) {
+            convertedOutput[numberIndex] = (convertMe * 0.946).toString();
+            convertedOutput[numberIndex + size] = "L";
+        } else if (array.includes("gallon") || array.includes("gallons")) {
+            convertedOutput[numberIndex] = (convertMe * 3.785).toString();
+            convertedOutput[numberIndex + size] = "L";
+        } else if (array.includes("ounce") || array.includes("ounces")) {
+            convertedOutput[numberIndex] = Math.floor(convertMe * 28.35).toString();
+            convertedOutput[numberIndex + size] = "grams";
+        } else if (array.includes("pound") || array.includes("pounds")) {
+            const g = Math.floor(convertMe * 454)
+            const kg = (convertMe * 0.454)
+            if (g >= 1000) {
+                convertedOutput[numberIndex] = kg.toString();
+                convertedOutput[numberIndex + size] = "kg";
+            } else {
+                convertedOutput[numberIndex] = g.toString();
+                convertedOutput[numberIndex + size] = "grams";
+            }
+        }
+    }
+    // rounding to two decimal places
+    if (typeof convertedOutput[numberIndex] === "string" && convertedOutput[numberIndex].includes("/")) {
+        convertedOutput[numberIndex] = decimal2fraction(convertedOutput[numberIndex]);
+    } else if (typeof convertedOutput[numberIndex] === "string" && convertedOutput[numberIndex].includes(".")) {
+        convertedOutput[numberIndex] =
+            convertedOutput[numberIndex].substring(0, convertedOutput[numberIndex].indexOf(".") + 3);
+    }
+
+    // removing a context array item to accommodate for mixed fractions
+    if (size === 2) {
+        convertedOutput.splice(numberIndex + 1, 1);
+    }
+
+    return convertedOutput;
+}
+
+// returns if a string has a number
+function hasNumber(myString) {
+    return /\d/.test(myString);
+}
+
+// go through all items in array, return first instance of number as float
+function getNum(array) {
+    let value = 0;
+    let size = 1;
+
+    let i = -1; // index in the array
+    let flag = true; // flag to tell if we DON'T have found the first instance of a number
+
+    while (flag && i <= array.length) {
+        i++;
+        if (hasNumber(array[i])) {
+            flag = false;
+            break;
+        }
+    }
+
+    // I should have used my simplify fraction here but this does the same thing
+    if (flag) {
+        console.log("something went wrong, there should be a number in this line but there isn't");
+    } else if (array[i] && array[i + 1]) { // check for mixed fraction
+        if (Number(array[i] && array[i + 1].includes("/") && Number(array[i + 1].split("/")[0]) && Number(array[i + 1].split("/")[1]))) {
+            size = 2;
+            value = Number(array[i]) + (Number(array[i + 1].split("/")[0]) / Number(array[i + 1].split("/")[1]));
+        } else if (array[i].includes("/") && Number(array[i].split("/")[0]) && Number(array[i].split("/")[1])) {
+            size = 1;
+            value = Number(array[i].split("/")[0]) / Number(array[i].split("/")[1])
+        } else {
+            size = 1;
+            value = Number(array[i]);
+        }
+    } else if (array[i]) {
+        size = 1;
+        value = Number(array[i]);
+    }
+
+    return [value, i, size];
 }
