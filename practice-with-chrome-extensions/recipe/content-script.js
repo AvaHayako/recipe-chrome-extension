@@ -1,34 +1,69 @@
 console.log("DEBUG enter content script")
 
-chrome.runtime.onMessage.addListener(function (message, sender, sendResponse) {
 
+
+const ingredients = [];
+get_original_ingredients();
+console.log("DEBUG", ingredients);
+// get original ingredient list
+
+function get_original_ingredients(){
+    if (ingredients == []){
+        console.log('DEBUG populating ingredients');
+        return ingredients;
+    }
+    $.each($('.o-Ingredients__a-Ingredient--CheckboxLabel'), function () {
+        let context = $(this)[0].innerHTML;
+        ingredients.push(context);
+    });
+    return ingredients;
+}
+
+chrome.runtime.onMessage.addListener(function (message, sender, sendResponse) {
     console.log("DEBUG message from CS: " + message);
     let mess = message.split(",");
     let measurementClick = mess[0];
     let metricClick = mess[1];
 
-    if (metricClick === "true") {
-        convertMetrics("metric");
+    if (metricClick == "true" && hasNumber(measurementClick)){
+        convertMetrics("metric",onChangedIngredients = true);
+        reProportion(Number(measurementClick),onChangedIngredients=true);
     }
-
-    if (hasNumber(measurementClick)) {
+    else if (metricClick === "true") {
+        convertMetrics("metric",onChangedIngredients=false);
+    }
+    else if (hasNumber(measurementClick)) {
         reProportion(Number(measurementClick));
     }
 });
 
 // goes through each ingredient item and changes its HTML contents based on desired portion
-function reProportion(multiplier) {
+function reProportion(multiplier,onChangedIngredients=false) {
+    let count = 0;
     $.each($('.o-Ingredients__a-Ingredient--CheckboxLabel'), function () {
-        console.log("element", $(this));
-        console.log("innerHTML", $(this)[0].innerHTML);
+        // console.log("element", $(this));
+        // console.log("innerHTML", $(this)[0].innerHTML);
+        let thisIngredient;
+        if (!onChangedIngredients) {
+            console.log("DEBUG3 NOTTTT DOING ON CHANGED INGREDDIENT");
+            thisIngredient = ingredients[count];
+        }
+        else{
+            console.log("DEBUG3  DOING ON CHANGED INGREDDIENT");
+            thisIngredient = $(this)[0].innerHTML;
+        }
 
-        if ($(this)[0].innerHTML) {
-            let context = $(this)[0].innerHTML;
-            var allNumsRegex = new RegExp(/(\d+\s+\d[/]\d)|((?<!\d\s)\d[/]\d)|((\b[^/]\d[^/]\b)|(\b(?<!(\d\s|[/]))\d(?!(\s\d|[/]))\b))/g);
+        // if ($(this)[0].innerHTML) {
+        if (thisIngredient) {
+            let context = thisIngredient;
+            // let context = $(this)[0].innerHTML;
+            var allNumsRegex = new RegExp(/(\d+\s+\d[/]\d)|((?<!\d\s)\d[/]\d)|((\b[^\.|^\/]\d[^\.|^\/]\b\b|\d*\.\d*)|(\b(?<!(\d\s|[/]))\d(?!(\s\d|[/]))\b))/g);
             var newContext = applyRegexAndMultiply(context, allNumsRegex, multiplier);
 
             $(this)[0].innerHTML = newContext;
         }
+
+        count++;
     });
 }
 
@@ -116,7 +151,7 @@ function applyRegexAndMultiply(context, myRegex, multiplier) {
         var value = match[0]; // e.g. "5"
         var newValue;
         var endsWSpace = false;
-        console.log("DEBUG dealing with " + value);
+        console.log("DEBUG dealing with " + value + "for"+charArray.join(""));
         if (value.includes("-") || value.includes(";")) {
             if (value.startsWith("-") || value.startsWith(";")) {
                 match.index++;
@@ -140,7 +175,8 @@ function applyRegexAndMultiply(context, myRegex, multiplier) {
             value = Number(value);
             // multiply value
             newValue = (value * multiplier).toString();
-            if (newValue.includes(".")) {
+            console.log("DEBUG4",value,"to",newValue);
+            if (newValue.includes(".") && !value.toString().includes(".")) {
                 newValue = decimal2fraction(newValue);
             }
         }
@@ -164,7 +200,7 @@ function applyRegexAndMultiply(context, myRegex, multiplier) {
             middle += " ".repeat(Math.abs(offset) + shift + 1);
         }
 
-        let back = charArray.join("").substring(endIX, charArray.length);
+        let back = " " + charArray.join("").substring(endIX, charArray.length);
 
         let print = ("DEBUG:\n\n"
             + "size of shift: " + shift + "\n"
@@ -188,15 +224,19 @@ function applyRegexAndMultiply(context, myRegex, multiplier) {
 }
 
 // Convert metrics of all ingredients
-function convertMetrics(measurementType) {
+function convertMetrics(measurementType, onChangedIngredients) {
+    // console.log("DEBUG2: on changed ingredients: ",onChangedIngredients);
     // if desired measurement system is metric, need to convert
     if (measurementType === "metric") {
         let prunedContexts = [];
+        let count = 0;
         $.each($('.o-Ingredients__a-Ingredient--CheckboxLabel'), function () {
-            const context = $(this)[0].innerHTML;
-            if (!context.includes("Deselect")) {
+            let context;
+            context = ingredients[count];
+        if (!context.includes("Deselect")) {
                 prunedContexts.push(context.split(" "));
             }
+            count++;
         });
         // pruned is a list of lists of words in each ingredient line
         prunedContexts.forEach(function (contextArray, idx) {
@@ -204,13 +244,15 @@ function convertMetrics(measurementType) {
             prunedContexts[idx] = convertContext(contextArray, measurementType);
         });
         // console.log("prunedContexts: ", prunedContexts);
-
+        count = 0;
         $.each($('.o-Ingredients__a-Ingredient--CheckboxLabel'), function (index) {
-            const context = $(this)[0].innerHTML;
+            let context;
+            context = ingredients[count];
 
             if (!context.includes("Deselect")) {
                 $(this)[0].innerHTML = prunedContexts[index - 1].join(" ");
             }
+            count++;
         });
     }
     // do stuff and update webpage
@@ -237,45 +279,45 @@ function convertContext(array, measurementType) {
             const litres = convertMe * 0.236
             if (ml >= 1000) {
                 convertedOutput[numberIndex] = litres.toString();
-                convertedOutput[numberIndex + size] = "L";
+                convertedOutput[numberIndex + size] = "L"+" ".repeat(convertedOutput[numberIndex].length);
             } else {
                 convertedOutput[numberIndex] = ml.toString();
-                convertedOutput[numberIndex + size] = "mL";
+                convertedOutput[numberIndex + size] = "mL"+" ".repeat(convertedOutput[numberIndex].length);
             }
         } else if (array.includes("teaspoon") || array.includes("teaspoons")) {
             convertedOutput[numberIndex] = (convertMe * 4.93).toString();
-            convertedOutput[numberIndex + size] = "mL";
+            convertedOutput[numberIndex + size] = "mL"+" ".repeat(convertedOutput[numberIndex].length);
         } else if (array.includes("tablespoon") || array.includes("tablespoons")) {
             convertedOutput[numberIndex] = (convertMe * 14.79).toString();
-            convertedOutput[numberIndex + size] = "mL";
+            convertedOutput[numberIndex + size] = "mL"+" ".repeat(convertedOutput[numberIndex].length);
         } else if (array.includes("pint") || array.includes("pints")) {
             const ml = Math.floor(convertMe * 473.18)
             const litres = convertMe * 0.473
             if (ml >= 1000) {
                 convertedOutput[numberIndex] = litres.toString();
-                convertedOutput[numberIndex + size] = "L";
+                convertedOutput[numberIndex + size] = "L"+" ".repeat(convertedOutput[numberIndex].length);
             } else {
                 convertedOutput[numberIndex] = ml.toString();
-                convertedOutput[numberIndex + size] = "mL";
+                convertedOutput[numberIndex + size] = "mL"+" ".repeat(convertedOutput[numberIndex].length);
             }
         } else if (array.includes("quart") || array.includes("quarts")) {
             convertedOutput[numberIndex] = (convertMe * 0.946).toString();
-            convertedOutput[numberIndex + size] = "L";
+            convertedOutput[numberIndex + size] = "L"+" ".repeat(convertedOutput[numberIndex].length);
         } else if (array.includes("gallon") || array.includes("gallons")) {
             convertedOutput[numberIndex] = (convertMe * 3.785).toString();
-            convertedOutput[numberIndex + size] = "L";
+            convertedOutput[numberIndex + size] = "L"+" ".repeat(convertedOutput[numberIndex].length);
         } else if (array.includes("ounce") || array.includes("ounces")) {
             convertedOutput[numberIndex] = Math.floor(convertMe * 28.35).toString();
-            convertedOutput[numberIndex + size] = "grams";
+            convertedOutput[numberIndex + size] = "grams"+" ".repeat(convertedOutput[numberIndex].length);
         } else if (array.includes("pound") || array.includes("pounds")) {
             const g = Math.floor(convertMe * 454)
             const kg = (convertMe * 0.454)
             if (g >= 1000) {
                 convertedOutput[numberIndex] = kg.toString();
-                convertedOutput[numberIndex + size] = "kg";
+                convertedOutput[numberIndex + size] = "kg"+" ".repeat(convertedOutput[numberIndex].length);
             } else {
                 convertedOutput[numberIndex] = g.toString();
-                convertedOutput[numberIndex + size] = "grams";
+                convertedOutput[numberIndex + size] = "grams"+" ".repeat(convertedOutput[numberIndex].length);
             }
         }
     }
